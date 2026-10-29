@@ -1,10 +1,4 @@
-Aqui está o código do seu **`index.html`** atualizado!
 
-Adicionei uma **mensagem de aviso em destaque** e uma **validação no formulário**: se o cliente tentar enviar o pedido sem preencher o horário ou se colocar um horário antes das 19:30h, o sistema avisa que as retiradas acontecem apenas a partir desse horário.
-
-Você pode selecionar o código abaixo, copiar (`Ctrl + C`) e colar no seu arquivo `index.html` para atualizar no GitHub:
-
-```html
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -314,7 +308,7 @@ Você pode selecionar o código abaixo, copiar (`Ctrl + C`) e colar no seu arqui
     <header>
         <h1>Day Burger</h1>
         <p>Faça seu pedido e retire no balcão!</p>
-        <p style="font-size: 0.85rem; color: #ff9800; margin-top: 5px; font-weight: bold;">⏰ Retiradas a partir das 19:30h</p>
+        <p style="font-size: 0.85rem; color: #ff9800; margin-top: 5px; font-weight: bold;">⏰ Retirada: das 19:30h às 20:30h</p>
         <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 3px;">Contato: (42) 98815-0451</p>
     </header>
 
@@ -341,7 +335,7 @@ Você pode selecionar o código abaixo, copiar (`Ctrl + C`) e colar no seu arqui
 
         <div class="pickup-badge">
             📍 Modalidade Exclusiva: RETIRADA NO LOCAL<br>
-            <small style="font-weight: normal; color: #fff;">⏰ As retiradas ocorrem <b>após as 19:30h</b></small>
+            <small style="font-weight: normal; color: #fff;">⏰ Horário de Retirada: <b>das 19:30h às 20:30h</b></small>
         </div>
 
         <!-- Formulário do Cliente -->
@@ -359,8 +353,8 @@ Você pode selecionar o código abaixo, copiar (`Ctrl + C`) e colar no seu arqui
             </div>
 
             <div class="form-group">
-                <label>Horário de Retirada (a partir das 19:30h) *</label>
-                <input type="time" id="horario" min="19:30" value="19:30">
+                <label>Horário Estimado para Retirada (entre 19:30h e 20:30h) *</label>
+                <input type="time" id="horario" min="19:30" max="20:30" value="19:30">
             </div>
 
             <div class="form-group">
@@ -474,8 +468,8 @@ Você pode selecionar o código abaixo, copiar (`Ctrl + C`) e colar no seu arqui
                 return;
             }
 
-            if (horario < "19:30") {
-                alert("As retiradas iniciam apenas a partir das 19:30h! Por favor, escolha um horário após as 19:30h.");
+            if (horario < "19:30" || horario > "20:30") {
+                alert("As retiradas ocorrem exclusivamente entre 19:30h e 20:30h! Por favor, ajuste o horário de retirada.");
                 document.getElementById('horario').focus();
                 return;
             }
@@ -486,7 +480,7 @@ Você pode selecionar o código abaixo, copiar (`Ctrl + C`) e colar no seu arqui
             mensagem += `*(Retirada no Local)*\n\n`;
             mensagem += `👤 *Cliente:* ${nome}\n`;
             mensagem += `📞 *Telefone:* ${telefone}\n`;
-            mensagem += `⏰ *Horário de Retirada:* ${horario}h\n\n`;
+            mensagem += `⏰ *Horário de Retirada:* ${horario}h (Período: 19:30 às 20:30)\n\n`;
             mensagem += `🛒 *Qtd de Combos:* ${quantidade}x Combo Clássico Burger + Batata + Coca Zero 200ml\n`;
             mensagem += `💰 *Valor Total:* R$ ${total}\n`;
             mensagem += `💳 *Forma de Pagamento:* ${formaPagamentoSelecionada}\n`;
