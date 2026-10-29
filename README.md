@@ -1,3 +1,10 @@
+Aqui está o código do seu **`index.html`** atualizado!
+
+Adicionei uma **mensagem de aviso em destaque** e uma **validação no formulário**: se o cliente tentar enviar o pedido sem preencher o horário ou se colocar um horário antes das 19:30h, o sistema avisa que as retiradas acontecem apenas a partir desse horário.
+
+Você pode selecionar o código abaixo, copiar (`Ctrl + C`) e colar no seu arquivo `index.html` para atualizar no GitHub:
+
+```html
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -319,7 +326,7 @@
             <div class="product-details">
                 <h2 class="product-title">Dia de Hambúrguer</h2>
                 <p class="product-desc">Clássico Burger + Batata + Coca Zero 200ml (Feito na brasa)</p>
-                <div class="product-price">R\$ 30,00</div>
+                <div class="product-price">R$ 30,00</div>
 
                 <div class="quantity-control">
                     <label>Quantidade:</label>
@@ -373,4 +380,132 @@
             <div id="pix-box" style="display: block;">
                 <p>Chave Pix (E-mail):</p>
                 <div class="pix-key-display" id="pix-key-text">capg@alcancepontagrossa.com.br</div>
-                <button class="btn-copy" onclick="copiarChavePix()">Copiar Chave Pix</button
+                <button class="btn-copy" onclick="copiarChavePix()">Copiar Chave Pix</button>
+            </div>
+
+            <!-- Resumo do Pedido -->
+            <div class="summary-box">
+                <div class="summary-row">
+                    <span>Combos (<span id="summary-qtd">1</span>x):</span>
+                    <span>R$ <span id="summary-subtotal">30,00</span></span>
+                </div>
+                <div class="summary-row total">
+                    <span>Total a Pagar:</span>
+                    <span>R$ <span id="summary-total">30,00</span></span>
+                </div>
+            </div>
+
+            <!-- Botão Enviar WhatsApp -->
+            <button class="btn-whatsapp" onclick="enviarPedido()">
+                📲 Enviar Pedido via WhatsApp
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        const PRECO_COMBO = 30.00;
+        const SEU_NUMERO_WHATSAPP = "5542988150451";
+        let quantidade = 1;
+        let formaPagamentoSelecionada = "Pix";
+
+        function mudarQtd(mudanca) {
+            quantidade += mudanca;
+            if (quantidade < 1) quantidade = 1;
+            
+            document.getElementById('qty-value').innerText = quantidade;
+            document.getElementById('summary-qtd').innerText = quantidade;
+            
+            let total = quantidade * PRECO_COMBO;
+            document.getElementById('summary-subtotal').innerText = total.toFixed(2).replace('.', ',');
+            document.getElementById('summary-total').innerText = total.toFixed(2).replace('.', ',');
+        }
+
+        function selecionarPagamento(metodo) {
+            formaPagamentoSelecionada = metodo;
+            
+            const opcoes = document.querySelectorAll('.payment-option');
+            opcoes.forEach(op => {
+                if(op.innerText.includes(metodo)) {
+                    op.classList.add('selected');
+                } else {
+                    op.classList.remove('selected');
+                }
+            });
+
+            const pixBox = document.getElementById('pix-box');
+            if(metodo === 'Pix') {
+                pixBox.style.display = 'block';
+            } else {
+                pixBox.style.display = 'none';
+            }
+        }
+
+        function copiarChavePix() {
+            const chave = "capg@alcancepontagrossa.com.br";
+            navigator.clipboard.writeText(chave).then(() => {
+                alert("Chave Pix copiada com sucesso!");
+            }).catch(err => {
+                console.error('Erro ao copiar chave pix: ', err);
+            });
+        }
+
+        function enviarPedido() {
+            const nome = document.getElementById('nome').value.trim();
+            const telefone = document.getElementById('telefone').value.trim();
+            const horario = document.getElementById('horario').value;
+            const obs = document.getElementById('obs').value.trim();
+
+            if (!nome) {
+                alert("Por favor, preencha o seu nome!");
+                document.getElementById('nome').focus();
+                return;
+            }
+
+            if (!telefone) {
+                alert("Por favor, preencha o seu telefone/WhatsApp!");
+                document.getElementById('telefone').focus();
+                return;
+            }
+
+            if (!horario) {
+                alert("Por favor, selecione o horário de retirada!");
+                document.getElementById('horario').focus();
+                return;
+            }
+
+            if (horario < "19:30") {
+                alert("As retiradas iniciam apenas a partir das 19:30h! Por favor, escolha um horário após as 19:30h.");
+                document.getElementById('horario').focus();
+                return;
+            }
+
+            let total = (quantidade * PRECO_COMBO).toFixed(2).replace('.', ',');
+
+            let mensagem = `🍔 *NOVO PEDIDO - DAY BURGER* 🍔\n`;
+            mensagem += `*(Retirada no Local)*\n\n`;
+            mensagem += `👤 *Cliente:* ${nome}\n`;
+            mensagem += `📞 *Telefone:* ${telefone}\n`;
+            mensagem += `⏰ *Horário de Retirada:* ${horario}h\n\n`;
+            mensagem += `🛒 *Qtd de Combos:* ${quantidade}x Combo Clássico Burger + Batata + Coca Zero 200ml\n`;
+            mensagem += `💰 *Valor Total:* R$ ${total}\n`;
+            mensagem += `💳 *Forma de Pagamento:* ${formaPagamentoSelecionada}\n`;
+            
+            if (formaPagamentoSelecionada === 'Pix') {
+                mensagem += `*(Cliente irá enviar o comprovante do Pix)*\n`;
+            }
+
+            if (obs) {
+                mensagem += `📝 *Observações:* ${obs}\n`;
+            }
+
+            mensagem += `\nAguardando confirmação do pedido!`;
+
+            const url = `https://api.whatsapp.com/send?phone=${SEU_NUMERO_WHATSAPP}&text=${encodeURIComponent(mensagem)}`;
+            window.open(url, '_blank');
+        }
+    </script>
+</body>
+</html>
+
+```
