@@ -330,8 +330,8 @@
     <header>
         <h1>Day Burger</h1>
         <p>Faça seu pedido e retire no balcão!</p>
-        <p style="font-size: 0.85rem; color: #ff9800; margin-top: 5px; font-weight: bold;">⏰ Retirada: das 19:30h às 20:30h</p>
-        <div id="stock-counter" class="stock-badge">🔥 Restam 49 de 70 combos</div>
+        <p style="font-size: 0.85rem; color: #ff9800; margin-top: 5px; font-weight: bold;">📅 Retirada: Amanhã (Dia 30) das 19:30h às 20:30h</p>
+        <div id="stock-counter" class="stock-badge">🔥 Carregando estoque...</div>
     </header>
 
     <div class="container">
@@ -339,13 +339,13 @@
         <!-- Cartão de Vendas Esgotadas (Aparece quando atinge 70) -->
         <div id="sold-out-message" class="sold-out-box">
             <h2>⛔ PEDIDOS ESGOTADOS!</h2>
-            <p>Atingimos o limite de <b>70 combos</b> para hoje.</p>
+            <p>Atingimos o limite de <b>70 combos</b> para esta edição.</p>
             <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 8px;">Agradecemos a preferência! Fique atento para as próximas edições.</p>
         </div>
 
         <!-- Cartão do Produto Único -->
         <div class="card" id="product-card">
-            <img src="clássico burger + batata_be99ba.png" alt="Combo Dia de Hambúrguer" class="product-image">
+            <img src="hamburguer.png" onerror="this.onerror=null; this.src='clássico burger + batata_be99ba.png';" alt="Combo Dia de Hambúrguer" class="product-image">
             <div class="product-details">
                 <h2 class="product-title">Dia de Hambúrguer</h2>
                 <p class="product-desc">Clássico Burger + Batata + Coca Zero 200ml (Feito na brasa)</p>
@@ -364,7 +364,7 @@
 
         <div class="pickup-badge" id="pickup-info">
             📍 Modalidade Exclusiva: RETIRADA NO LOCAL<br>
-            <small style="font-weight: normal; color: #fff;">⏰ Horário de Retirada: <b>das 19:30h às 20:30h</b></small>
+            <small style="font-weight: normal; color: #fff;">📅 Data de Retirada: <b>Amanhã, dia 30</b> (das 19:30h às 20:30h)</small>
         </div>
 
         <!-- Formulário do Cliente -->
@@ -382,7 +382,7 @@
             </div>
 
             <div class="form-group">
-                <label>Horário Estimado para Retirada (entre 19:30h e 20:30h) *</label>
+                <label>Horário Estimado de Retirada para Amanhã (dia 30, entre 19:30h e 20:30h) *</label>
                 <input type="time" id="horario" min="19:30" max="20:30" value="19:30">
             </div>
 
@@ -427,29 +427,37 @@
     </div>
 
     <script>
-        const LIMITE_PEDIDOS = 70; // Limite máximo de combos
-        const PEDIDOS_INICIAIS = 21; // 21 pedidos já efetuados (Restam 49 de 70)
+        const LIMITE_PEDIDOS = 70;
         const PRECO_COMBO = 30.00;
         const SEU_NUMERO_WHATSAPP = "5542988150451";
         
+        const API_URL = "https://api.countapi.xyz/v1/dayburger_pg_2026";
+        
         let quantidade = 1;
         let formaPagamentoSelecionada = "Pix";
+        let totalVendidosNuvem = 21; // Mantém a contagem de 21 já efetuados (Restam 49 de 70)
 
-        // Obtém o total de novos pedidos salvos localmente
-        function obterNovosPedidos() {
-            return parseInt(localStorage.getItem('dayburger_novos_pedidos') || '0');
+        async function buscarEstoqueNuvem() {
+            try {
+                const resp = await fetch(`${API_URL}/get/combos_vendidos`);
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data && data.value !== undefined) {
+                        totalVendidosNuvem = Math.max(21, data.value);
+                    }
+                }
+            } catch (err) {
+                console.log("Usando contagem local fallback:", err);
+                let localExtra = parseInt(localStorage.getItem('db_extra_pedidos') || '0');
+                totalVendidosNuvem = 21 + localExtra;
+            }
+            atualizarInterfaceEstoque();
         }
 
-        function obterTotalPedidos() {
-            return PEDIDOS_INICIAIS + obterNovosPedidos();
-        }
-
-        function verificarEstoque() {
-            let totalAtual = obterTotalPedidos();
-            let restantes = LIMITE_PEDIDOS - totalAtual;
+        function atualizarInterfaceEstoque() {
+            let restantes = LIMITE_PEDIDOS - totalVendidosNuvem;
 
             if (restantes <= 0) {
-                // Esgotado
                 document.getElementById('sold-out-message').style.display = 'block';
                 document.getElementById('stock-counter').innerText = '⛔ LOTE ESGOTADO (70/70)';
                 document.getElementById('form-card').style.display = 'none';
@@ -460,14 +468,13 @@
         }
 
         function mudarQtd(mudanca) {
-            let totalAtual = obterTotalPedidos();
-            let maxPermitido = LIMITE_PEDIDOS - totalAtual;
+            let restantes = LIMITE_PEDIDOS - totalVendidosNuvem;
 
             quantidade += mudanca;
             if (quantidade < 1) quantidade = 1;
-            if (quantidade > maxPermitido) {
-                alert(`Ops! Só restam ${maxPermitido} combo(s) disponível(is).`);
-                quantidade = maxPermitido;
+            if (quantidade > restantes) {
+                alert(`Ops! Só restam ${restantes} combo(s) disponível(is).`);
+                quantidade = restantes;
             }
             
             document.getElementById('qty-value').innerText = quantidade;
@@ -505,11 +512,20 @@
             });
         }
 
-        function enviarPedido() {
-            let totalAtual = obterTotalPedidos();
-            if (totalAtual >= LIMITE_PEDIDOS) {
+        async function registrarVendaNuvem(qtd) {
+            try {
+                await fetch(`${API_URL}/hit/combos_vendidos?amount=${qtd}`);
+            } catch (e) {
+                let localExtra = parseInt(localStorage.getItem('db_extra_pedidos') || '0');
+                localStorage.setItem('db_extra_pedidos', localExtra + qtd);
+            }
+        }
+
+        async function enviarPedido() {
+            let restantes = LIMITE_PEDIDOS - totalVendidosNuvem;
+            if (restantes <= 0) {
                 alert("Desculpe! Os pedidos se encerraram pois atingimos o limite de 70 combos.");
-                verificarEstoque();
+                atualizarInterfaceEstoque();
                 return;
             }
 
@@ -536,9 +552,9 @@
                 return;
             }
 
-            // Incrementa o contador de novos pedidos
-            let novos = obterNovosPedidos();
-            localStorage.setItem('dayburger_novos_pedidos', novos + quantidade);
+            await registrarVendaNuvem(quantidade);
+            totalVendidosNuvem += quantidade;
+            atualizarInterfaceEstoque();
 
             let total = (quantidade * PRECO_COMBO).toFixed(2).replace('.', ',');
 
@@ -546,6 +562,7 @@
             mensagem += `*(Retirada no Local)*\n\n`;
             mensagem += `👤 *Cliente:* ${nome}\n`;
             mensagem += `📞 *Telefone:* ${telefone}\n`;
+            mensagem += `📅 *Data de Retirada:* Amanhã (Dia 30)\n`;
             mensagem += `⏰ *Horário de Retirada:* ${horario}h\n\n`;
             mensagem += `🛒 *Qtd de Combos:* ${quantidade}x Combo Clássico Burger + Batata + Coca Zero 200ml\n`;
             mensagem += `💰 *Valor Total:* R$ ${total}\n`;
@@ -563,11 +580,10 @@
 
             const url = `https://api.whatsapp.com/send?phone=${SEU_NUMERO_WHATSAPP}&text=${encodeURIComponent(mensagem)}`;
             window.open(url, '_blank');
-
-            setTimeout(verificarEstoque, 1000);
         }
 
-        verificarEstoque();
+        buscarEstoqueNuvem();
+        setInterval(buscarEstoqueNuvem, 10000);
     </script>
 </body>
 </html>
