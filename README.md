@@ -284,12 +284,6 @@
             background-color: #20ba5a;
         }
 
-        .btn-disabled {
-            background-color: #555 !important;
-            cursor: not-allowed !important;
-            box-shadow: none !important;
-        }
-
         .pickup-badge {
             background: rgba(255, 152, 0, 0.15);
             color: var(--accent);
@@ -337,7 +331,7 @@
         <h1>Day Burger</h1>
         <p>Faça seu pedido e retire no balcão!</p>
         <p style="font-size: 0.85rem; color: #ff9800; margin-top: 5px; font-weight: bold;">⏰ Retirada: das 19:30h às 20:30h</p>
-        <div id="stock-counter" class="stock-badge">🔥 Lote Limitado: 70 Combos</div>
+        <div id="stock-counter" class="stock-badge">🔥 Restam 49 de 70 combos</div>
     </header>
 
     <div class="container">
@@ -434,15 +428,20 @@
 
     <script>
         const LIMITE_PEDIDOS = 70; // Limite máximo de combos
+        const PEDIDOS_INICIAIS = 21; // 21 pedidos já efetuados (Restam 49 de 70)
         const PRECO_COMBO = 30.00;
         const SEU_NUMERO_WHATSAPP = "5542988150451";
         
         let quantidade = 1;
         let formaPagamentoSelecionada = "Pix";
 
-        // Obtém o total de pedidos salvos localmente
+        // Obtém o total de novos pedidos salvos localmente
+        function obterNovosPedidos() {
+            return parseInt(localStorage.getItem('dayburger_novos_pedidos') || '0');
+        }
+
         function obterTotalPedidos() {
-            return parseInt(localStorage.getItem('dayburger_total_pedidos') || '0');
+            return PEDIDOS_INICIAIS + obterNovosPedidos();
         }
 
         function verificarEstoque() {
@@ -537,8 +536,9 @@
                 return;
             }
 
-            // Incrementa o contador de pedidos
-            localStorage.setItem('dayburger_total_pedidos', totalAtual + quantidade);
+            // Incrementa o contador de novos pedidos
+            let novos = obterNovosPedidos();
+            localStorage.setItem('dayburger_novos_pedidos', novos + quantidade);
 
             let total = (quantidade * PRECO_COMBO).toFixed(2).replace('.', ',');
 
@@ -564,11 +564,9 @@
             const url = `https://api.whatsapp.com/send?phone=${SEU_NUMERO_WHATSAPP}&text=${encodeURIComponent(mensagem)}`;
             window.open(url, '_blank');
 
-            // Atualiza tela após o envio
             setTimeout(verificarEstoque, 1000);
         }
 
-        // Executa ao carregar a página
         verificarEstoque();
     </script>
 </body>
