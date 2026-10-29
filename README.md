@@ -292,12 +292,13 @@
             background: rgba(255, 152, 0, 0.15);
             color: var(--accent);
             border: 1px solid var(--accent);
-            padding: 10px;
+            padding: 12px;
             border-radius: 8px;
             text-align: center;
             font-size: 0.9rem;
             font-weight: bold;
             margin-bottom: 20px;
+            line-height: 1.4;
         }
     </style>
 </head>
@@ -306,19 +307,19 @@
     <header>
         <h1>Day Burger</h1>
         <p>Faça seu pedido e retire no balcão!</p>
-        <p style="font-size: 0.8rem; color: #ff9800; margin-top: 5px;">Contato: (42) 98815-0451</p>
+        <p style="font-size: 0.85rem; color: #ff9800; margin-top: 5px; font-weight: bold;">⏰ Retiradas a partir das 19:30h</p>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 3px;">Contato: (42) 98815-0451</p>
     </header>
 
     <div class="container">
         
         <!-- Cartão do Produto Único -->
         <div class="card">
-            <!-- Imagem idêntica à arte fornecida -->
             <img src="clássico burger + batata_be99ba.png" alt="Combo Dia de Hambúrguer" class="product-image">
             <div class="product-details">
                 <h2 class="product-title">Dia de Hambúrguer</h2>
                 <p class="product-desc">Clássico Burger + Batata + Coca Zero 200ml (Feito na brasa)</p>
-                <div class="product-price">R$ 30,00</div>
+                <div class="product-price">R\$ 30,00</div>
 
                 <div class="quantity-control">
                     <label>Quantidade:</label>
@@ -332,7 +333,8 @@
         </div>
 
         <div class="pickup-badge">
-            📍 Modalidade Exclusiva: RETIRADA NO LOCAL
+            📍 Modalidade Exclusiva: RETIRADA NO LOCAL<br>
+            <small style="font-weight: normal; color: #fff;">⏰ As retiradas ocorrem <b>após as 19:30h</b></small>
         </div>
 
         <!-- Formulário do Cliente -->
@@ -350,8 +352,13 @@
             </div>
 
             <div class="form-group">
-                <label>Horário de Retirada / Observações</label>
-                <textarea id="obs" rows="2" placeholder="Ex: Retiro em 20 minutos, sem cebola..."></textarea>
+                <label>Horário de Retirada (a partir das 19:30h) *</label>
+                <input type="time" id="horario" min="19:30" value="19:30">
+            </div>
+
+            <div class="form-group">
+                <label>Observações do Pedido</label>
+                <textarea id="obs" rows="2" placeholder="Ex: Sem cebola, pão bem selado..."></textarea>
             </div>
 
             <h3 class="section-title" style="margin-top: 20px;">Forma de Pagamento</h3>
@@ -366,118 +373,4 @@
             <div id="pix-box" style="display: block;">
                 <p>Chave Pix (E-mail):</p>
                 <div class="pix-key-display" id="pix-key-text">capg@alcancepontagrossa.com.br</div>
-                <button class="btn-copy" onclick="copiarChavePix()">Copiar Chave Pix</button>
-            </div>
-
-            <!-- Resumo do Pedido -->
-            <div class="summary-box">
-                <div class="summary-row">
-                    <span>Combos (<span id="summary-qtd">1</span>x):</span>
-                    <span>R$ <span id="summary-subtotal">30,00</span></span>
-                </div>
-                <div class="summary-row total">
-                    <span>Total a Pagar:</span>
-                    <span>R$ <span id="summary-total">30,00</span></span>
-                </div>
-            </div>
-
-            <!-- Botão Enviar WhatsApp -->
-            <button class="btn-whatsapp" onclick="enviarPedido()">
-                📲 Enviar Pedido via WhatsApp
-            </button>
-        </div>
-
-    </div>
-
-    <script>
-        const PRECO_COMBO = 30.00;
-        const SEU_NUMERO_WHATSAPP = "5542988150451"; // Seu número configurado
-        let quantidade = 1;
-        let formaPagamentoSelecionada = "Pix";
-
-        function mudarQtd(mudanca) {
-            quantidade += mudanca;
-            if (quantidade < 1) quantidade = 1;
-            
-            document.getElementById('qty-value').innerText = quantidade;
-            document.getElementById('summary-qtd').innerText = quantidade;
-            
-            let total = quantidade * PRECO_COMBO;
-            document.getElementById('summary-subtotal').innerText = total.toFixed(2).replace('.', ',');
-            document.getElementById('summary-total').innerText = total.toFixed(2).replace('.', ',');
-        }
-
-        function selecionarPagamento(metodo) {
-            formaPagamentoSelecionada = metodo;
-            
-            // Atualizar classes visuais
-            const opcoes = document.querySelectorAll('.payment-option');
-            opcoes.forEach(op => {
-                if(op.innerText.includes(metodo)) {
-                    op.classList.add('selected');
-                } else {
-                    op.classList.remove('selected');
-                }
-            });
-
-            // Mostrar/Esconder caixa Pix
-            const pixBox = document.getElementById('pix-box');
-            if(metodo === 'Pix') {
-                pixBox.style.display = 'block';
-            } else {
-                pixBox.style.display = 'none';
-            }
-        }
-
-        function copiarChavePix() {
-            const chave = "capg@alcancepontagrossa.com.br";
-            navigator.clipboard.writeText(chave).then(() => {
-                alert("Chave Pix copiada com sucesso!");
-            }).catch(err => {
-                console.error('Erro ao copiar chave pix: ', err);
-            });
-        }
-
-        function enviarPedido() {
-            const nome = document.getElementById('nome').value.trim();
-            const telefone = document.getElementById('telefone').value.trim();
-            const obs = document.getElementById('obs').value.trim();
-
-            if (!nome) {
-                alert("Por favor, preencha o seu nome!");
-                document.getElementById('nome').focus();
-                return;
-            }
-
-            if (!telefone) {
-                alert("Por favor, preencha o seu telefone/WhatsApp!");
-                document.getElementById('telefone').focus();
-                return;
-            }
-
-            let total = (quantidade * PRECO_COMBO).toFixed(2).replace('.', ',');
-
-            let mensagem = `🍔 *NOVO PEDIDO - DAY BURGER* 🍔\n`;
-            mensagem += `*(Retirada no Local)*\n\n`;
-            mensagem += `👤 *Cliente:* ${nome}\n`;
-            mensagem += `📞 *Telefone:* ${telefone}\n\n`;
-            mensagem += `🛒 *Qtd de Combos:* ${quantidade}x Combo Clássico Burger + Batata + Coca Zero 200ml\n`;
-            mensagem += `💰 *Valor Total:* R$ ${total}\n`;
-            mensagem += `💳 *Forma de Pagamento:* ${formaPagamentoSelecionada}\n`;
-            
-            if (formaPagamentoSelecionada === 'Pix') {
-                mensagem += `*(Cliente irá enviar o comprovante do Pix)*\n`;
-            }
-
-            if (obs) {
-                mensagem += `📝 *Observações / Horário:* ${obs}\n`;
-            }
-
-            mensagem += `\nAguardando confirmação do pedido!`;
-
-            const url = `https://api.whatsapp.com/send?phone=${SEU_NUMERO_WHATSAPP}&text=${encodeURIComponent(mensagem)}`;
-            window.open(url, '_blank');
-        }
-    </script>
-</body>
-</html>
+                <button class="btn-copy" onclick="copiarChavePix()">Copiar Chave Pix</button
