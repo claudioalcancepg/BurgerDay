@@ -239,10 +239,6 @@
             font-size: 0.85rem;
         }
 
-        .btn-copy:active {
-            opacity: 0.8;
-        }
-
         .summary-box {
             background: #252525;
             padding: 15px;
@@ -288,6 +284,12 @@
             background-color: #20ba5a;
         }
 
+        .btn-disabled {
+            background-color: #555 !important;
+            cursor: not-allowed !important;
+            box-shadow: none !important;
+        }
+
         .pickup-badge {
             background: rgba(255, 152, 0, 0.15);
             color: var(--accent);
@@ -300,6 +302,33 @@
             margin-bottom: 20px;
             line-height: 1.4;
         }
+
+        .stock-badge {
+            background: #e50914;
+            color: #fff;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            display: inline-block;
+            margin-top: 8px;
+        }
+
+        .sold-out-box {
+            display: none;
+            background: rgba(229, 9, 20, 0.2);
+            border: 2px solid var(--primary-color);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .sold-out-box h2 {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -307,14 +336,21 @@
     <header>
         <h1>Day Burger</h1>
         <p>Faça seu pedido e retire no balcão!</p>
-        <p style="font-size: 0.85rem; color: #ff9800; margin-top: 5px; font-weight: bold;">⏰ Retiradas a partir das 19:30h</p>
-        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 3px;">Contato: (42) 98815-0451</p>
+        <p style="font-size: 0.85rem; color: #ff9800; margin-top: 5px; font-weight: bold;">⏰ Retirada: das 19:30h às 20:30h</p>
+        <div id="stock-counter" class="stock-badge">🔥 Lote Limitado: 70 Combos</div>
     </header>
 
     <div class="container">
         
+        <!-- Cartão de Vendas Esgotadas (Aparece quando atinge 70) -->
+        <div id="sold-out-message" class="sold-out-box">
+            <h2>⛔ PEDIDOS ESGOTADOS!</h2>
+            <p>Atingimos o limite de <b>70 combos</b> para hoje.</p>
+            <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 8px;">Agradecemos a preferência! Fique atento para as próximas edições.</p>
+        </div>
+
         <!-- Cartão do Produto Único -->
-        <div class="card">
+        <div class="card" id="product-card">
             <img src="clássico burger + batata_be99ba.png" alt="Combo Dia de Hambúrguer" class="product-image">
             <div class="product-details">
                 <h2 class="product-title">Dia de Hambúrguer</h2>
@@ -332,13 +368,13 @@
             </div>
         </div>
 
-        <div class="pickup-badge">
+        <div class="pickup-badge" id="pickup-info">
             📍 Modalidade Exclusiva: RETIRADA NO LOCAL<br>
-            <small style="font-weight: normal; color: #fff;">⏰ As retiradas ocorrem <b>após as 19:30h</b></small>
+            <small style="font-weight: normal; color: #fff;">⏰ Horário de Retirada: <b>das 19:30h às 20:30h</b></small>
         </div>
 
         <!-- Formulário do Cliente -->
-        <div class="card" style="padding: 20px;">
+        <div class="card" id="form-card" style="padding: 20px;">
             <h3 class="section-title">Seus Dados</h3>
             
             <div class="form-group">
@@ -352,8 +388,8 @@
             </div>
 
             <div class="form-group">
-                <label>Horário de Retirada (a partir das 19:30h) *</label>
-                <input type="time" id="horario" min="19:30" value="19:30">
+                <label>Horário Estimado para Retirada (entre 19:30h e 20:30h) *</label>
+                <input type="time" id="horario" min="19:30" max="20:30" value="19:30">
             </div>
 
             <div class="form-group">
@@ -389,7 +425,7 @@
             </div>
 
             <!-- Botão Enviar WhatsApp -->
-            <button class="btn-whatsapp" onclick="enviarPedido()">
+            <button id="btn-submit" class="btn-whatsapp" onclick="enviarPedido()">
                 📲 Enviar Pedido via WhatsApp
             </button>
         </div>
@@ -397,14 +433,43 @@
     </div>
 
     <script>
+        const LIMITE_PEDIDOS = 70; // Limite máximo de combos
         const PRECO_COMBO = 30.00;
         const SEU_NUMERO_WHATSAPP = "5542988150451";
+        
         let quantidade = 1;
         let formaPagamentoSelecionada = "Pix";
 
+        // Obtém o total de pedidos salvos localmente
+        function obterTotalPedidos() {
+            return parseInt(localStorage.getItem('dayburger_total_pedidos') || '0');
+        }
+
+        function verificarEstoque() {
+            let totalAtual = obterTotalPedidos();
+            let restantes = LIMITE_PEDIDOS - totalAtual;
+
+            if (restantes <= 0) {
+                // Esgotado
+                document.getElementById('sold-out-message').style.display = 'block';
+                document.getElementById('stock-counter').innerText = '⛔ LOTE ESGOTADO (70/70)';
+                document.getElementById('form-card').style.display = 'none';
+                document.getElementById('product-card').style.opacity = '0.5';
+            } else {
+                document.getElementById('stock-counter').innerText = `🔥 Restam ${restantes} de ${LIMITE_PEDIDOS} combos`;
+            }
+        }
+
         function mudarQtd(mudanca) {
+            let totalAtual = obterTotalPedidos();
+            let maxPermitido = LIMITE_PEDIDOS - totalAtual;
+
             quantidade += mudanca;
             if (quantidade < 1) quantidade = 1;
+            if (quantidade > maxPermitido) {
+                alert(`Ops! Só restam ${maxPermitido} combo(s) disponível(is).`);
+                quantidade = maxPermitido;
+            }
             
             document.getElementById('qty-value').innerText = quantidade;
             document.getElementById('summary-qtd').innerText = quantidade;
@@ -438,12 +503,17 @@
             const chave = "capg@alcancepontagrossa.com.br";
             navigator.clipboard.writeText(chave).then(() => {
                 alert("Chave Pix copiada com sucesso!");
-            }).catch(err => {
-                console.error('Erro ao copiar chave pix: ', err);
             });
         }
 
         function enviarPedido() {
+            let totalAtual = obterTotalPedidos();
+            if (totalAtual >= LIMITE_PEDIDOS) {
+                alert("Desculpe! Os pedidos se encerraram pois atingimos o limite de 70 combos.");
+                verificarEstoque();
+                return;
+            }
+
             const nome = document.getElementById('nome').value.trim();
             const telefone = document.getElementById('telefone').value.trim();
             const horario = document.getElementById('horario').value;
@@ -461,17 +531,14 @@
                 return;
             }
 
-            if (!horario) {
-                alert("Por favor, selecione o horário de retirada!");
+            if (!horario || horario < "19:30" || horario > "20:30") {
+                alert("As retiradas ocorrem exclusivamente entre 19:30h e 20:30h!");
                 document.getElementById('horario').focus();
                 return;
             }
 
-            if (horario < "19:30") {
-                alert("As retiradas iniciam apenas a partir das 19:30h! Por favor, escolha um horário após as 19:30h.");
-                document.getElementById('horario').focus();
-                return;
-            }
+            // Incrementa o contador de pedidos
+            localStorage.setItem('dayburger_total_pedidos', totalAtual + quantidade);
 
             let total = (quantidade * PRECO_COMBO).toFixed(2).replace('.', ',');
 
@@ -496,7 +563,13 @@
 
             const url = `https://api.whatsapp.com/send?phone=${SEU_NUMERO_WHATSAPP}&text=${encodeURIComponent(mensagem)}`;
             window.open(url, '_blank');
+
+            // Atualiza tela após o envio
+            setTimeout(verificarEstoque, 1000);
         }
+
+        // Executa ao carregar a página
+        verificarEstoque();
     </script>
 </body>
 </html>
